@@ -17,6 +17,7 @@
     Settings.init();
     Screensaver.init();
     Weather.start();
+    Prayer.start();
     Home.init();
 
     CustomPhotos.init().then(function () {

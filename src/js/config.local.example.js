@@ -10,5 +10,14 @@ window.LAUNCHER_LOCAL = {
         latitude: null,
         longitude: null,
         unit: 'celsius'
+    },
+
+    prayer: {
+        enabled: false,
+        latitude: null,
+        longitude: null,
+        method: 8,
+        school: 0,
+        tune: ''
     }
 };

@@ -34,6 +34,7 @@ button-redirect/uploads/
 button-redirect/__pycache__/
 .venv*/
 src/.manifest.tmp
+work/
 
 # Per-TV config: coordinates, devlog address. config.js keeps the nulls and this overrides them,
 # so nothing has to be stripped before a push. See src/js/config.local.example.js.

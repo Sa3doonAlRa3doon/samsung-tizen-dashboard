@@ -33,6 +33,15 @@
                 <div id="share" class="quick-action"><span class="quick-icon">▱</span><span data-i18n="share">Share</span></div>
                 <div id="gear" class="quick-action icon-only" aria-label="Settings" data-i18n-aria="settings"><span class="quick-icon">⚙</span></div>
             </div>
+            <aside id="prayer-card" class="prayer-card hidden" aria-live="polite">
+                <div class="prayer-kicker" data-i18n="nextPrayer">Next prayer</div>
+                <div class="prayer-main">
+                    <span id="prayer-name">—</span>
+                    <span id="prayer-time">—</span>
+                </div>
+                <div id="prayer-countdown" class="prayer-countdown">—</div>
+                <div id="prayer-status" class="prayer-status">AlAdhan API</div>
+            </aside>
             <div id="apps-section" class="shelf">
                 <h2 data-i18n="myDock">My dock · select + to add or reorder</h2>
                 <div class="row-viewport"><div id="apps-row" class="row-track"></div></div>
@@ -195,6 +204,7 @@
     <script src="js/wallpaper.js"></script>
     <script src="js/appearance.js"></script>
     <script src="js/weather.js"></script>
+    <script src="js/prayer.js"></script>
     <script src="js/sound.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/render-probe.js"></script>

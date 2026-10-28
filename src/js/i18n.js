@@ -17,7 +17,10 @@
             permanent: 'Saved permanently on this TV', open: 'Open', hide: 'Hide', show: 'Show', always: 'Always',
             selected: 'When selected', never: 'Never', oneRow: '1 row', twoRows: '2 rows',
             twentyFour: '24-hour', twelve: '12-hour', select: 'Select', back: 'Back', change: 'Change', home: 'Home',
-            returnFromApps: 'Return from apps', quickSettings: 'Quick settings'
+            returnFromApps: 'Return from apps', quickSettings: 'Quick settings',
+            nextPrayer: 'Next prayer', prayerTimes: 'Prayer times', prayerUpdating: 'Updating prayer times…',
+            prayerUnavailable: 'Waiting for schedule', prayerFajr: 'Fajr', prayerDhuhr: 'Dhuhr', prayerAsr: 'Asr',
+            prayerMaghrib: 'Maghrib', prayerIsha: 'Isha'
         },
         'ar-AE': {
             source: 'المصدر', wifi: 'واي فاي', bluetooth: 'بلوتوث', share: 'مشاركة الشاشة', settings: 'الإعدادات',
@@ -33,7 +36,10 @@
             permanent: 'محفوظة بشكل دائم على هذا التلفزيون', open: 'فتح', hide: 'إخفاء', show: 'إظهار', always: 'دائماً',
             selected: 'عند التحديد', never: 'أبداً', oneRow: 'صف واحد', twoRows: 'صفان',
             twentyFour: '24 ساعة', twelve: '12 ساعة', select: 'اختيار', back: 'رجوع', change: 'تغيير', home: 'الرئيسية',
-            returnFromApps: 'العودة من التطبيقات', quickSettings: 'إعدادات سريعة'
+            returnFromApps: 'العودة من التطبيقات', quickSettings: 'إعدادات سريعة',
+            nextPrayer: 'الصلاة القادمة', prayerTimes: 'مواقيت الصلاة', prayerUpdating: 'جارٍ تحديث مواقيت الصلاة…',
+            prayerUnavailable: 'في انتظار المواقيت', prayerFajr: 'الفجر', prayerDhuhr: 'الظهر', prayerAsr: 'العصر',
+            prayerMaghrib: 'المغرب', prayerIsha: 'العشاء'
         },
         'bs-BA': {
             source: 'Izvor', wifi: 'Wi-Fi', bluetooth: 'Bluetooth', share: 'Dijeljenje', settings: 'Postavke',
@@ -49,7 +55,10 @@
             permanent: 'Trajno spremljeno na ovom TV-u', open: 'Otvori', hide: 'Sakrij', show: 'Prikaži', always: 'Uvijek',
             selected: 'Kada je odabrano', never: 'Nikada', oneRow: '1 red', twoRows: '2 reda',
             twentyFour: '24 sata', twelve: '12 sati', select: 'Odaberi', back: 'Nazad', change: 'Promijeni', home: 'Početna',
-            returnFromApps: 'Povratak iz aplikacija', quickSettings: 'Brze postavke'
+            returnFromApps: 'Povratak iz aplikacija', quickSettings: 'Brze postavke',
+            nextPrayer: 'Sljedeći namaz', prayerTimes: 'Vremena namaza', prayerUpdating: 'Ažuriranje vremena namaza…',
+            prayerUnavailable: 'Čekanje rasporeda', prayerFajr: 'Sabah', prayerDhuhr: 'Podne', prayerAsr: 'Ikindija',
+            prayerMaghrib: 'Akšam', prayerIsha: 'Jacija'
         },
         'es-ES': {
             source: 'Fuente', wifi: 'Wi-Fi', bluetooth: 'Bluetooth', share: 'Compartir', settings: 'Ajustes',
@@ -65,7 +74,10 @@
             permanent: 'Guardado permanentemente en este TV', open: 'Abrir', hide: 'Ocultar', show: 'Mostrar', always: 'Siempre',
             selected: 'Al seleccionar', never: 'Nunca', oneRow: '1 fila', twoRows: '2 filas',
             twentyFour: '24 horas', twelve: '12 horas', select: 'Seleccionar', back: 'Atrás', change: 'Cambiar', home: 'Inicio',
-            returnFromApps: 'Volver desde las apps', quickSettings: 'Ajustes rápidos'
+            returnFromApps: 'Volver desde las apps', quickSettings: 'Ajustes rápidos',
+            nextPrayer: 'Próxima oración', prayerTimes: 'Horarios de oración', prayerUpdating: 'Actualizando horarios…',
+            prayerUnavailable: 'Esperando horarios', prayerFajr: 'Fajr', prayerDhuhr: 'Dhuhr', prayerAsr: 'Asr',
+            prayerMaghrib: 'Maghrib', prayerIsha: 'Isha'
         },
         'fr-FR': {
             source: 'Source', wifi: 'Wi-Fi', bluetooth: 'Bluetooth', share: 'Partager', settings: 'Paramètres',
@@ -81,7 +93,10 @@
             permanent: 'Enregistré définitivement sur ce téléviseur', open: 'Ouvrir', hide: 'Masquer', show: 'Afficher', always: 'Toujours',
             selected: 'Quand sélectionné', never: 'Jamais', oneRow: '1 ligne', twoRows: '2 lignes',
             twentyFour: '24 heures', twelve: '12 heures', select: 'Sélectionner', back: 'Retour', change: 'Modifier', home: 'Accueil',
-            returnFromApps: 'Retour depuis les apps', quickSettings: 'Réglages rapides'
+            returnFromApps: 'Retour depuis les apps', quickSettings: 'Réglages rapides',
+            nextPrayer: 'Prochaine prière', prayerTimes: 'Heures de prière', prayerUpdating: 'Mise à jour des horaires…',
+            prayerUnavailable: 'En attente des horaires', prayerFajr: 'Fajr', prayerDhuhr: 'Dhuhr', prayerAsr: 'Asr',
+            prayerMaghrib: 'Maghrib', prayerIsha: 'Isha'
         },
         'de-DE': {
             source: 'Quelle', wifi: 'WLAN', bluetooth: 'Bluetooth', share: 'Teilen', settings: 'Einstellungen',
@@ -96,7 +111,10 @@
             samsungHome: 'Samsung Home', permanent: 'Dauerhaft auf diesem Fernseher gespeichert', open: 'Öffnen', hide: 'Ausblenden',
             show: 'Anzeigen', always: 'Immer', selected: 'Bei Auswahl', never: 'Nie', oneRow: '1 Reihe', twoRows: '2 Reihen',
             twentyFour: '24 Stunden', twelve: '12 Stunden', select: 'Auswählen', back: 'Zurück', change: 'Ändern', home: 'Start',
-            returnFromApps: 'Aus Apps zurückkehren', quickSettings: 'Schnelleinstellungen'
+            returnFromApps: 'Aus Apps zurückkehren', quickSettings: 'Schnelleinstellungen',
+            nextPrayer: 'Nächstes Gebet', prayerTimes: 'Gebetszeiten', prayerUpdating: 'Gebetszeiten werden aktualisiert…',
+            prayerUnavailable: 'Warte auf Zeitplan', prayerFajr: 'Fajr', prayerDhuhr: 'Dhuhr', prayerAsr: 'Asr',
+            prayerMaghrib: 'Maghrib', prayerIsha: 'Isha'
         },
         'tr-TR': {
             source: 'Kaynak', wifi: 'Wi-Fi', bluetooth: 'Bluetooth', share: 'Paylaş', settings: 'Ayarlar',
@@ -111,7 +129,10 @@
             samsungHome: 'Samsung Ana Sayfa', permanent: 'Bu TV’ye kalıcı olarak kaydedildi', open: 'Aç', hide: 'Gizle',
             show: 'Göster', always: 'Her zaman', selected: 'Seçilince', never: 'Asla', oneRow: '1 sıra', twoRows: '2 sıra',
             twentyFour: '24 saat', twelve: '12 saat', select: 'Seç', back: 'Geri', change: 'Değiştir', home: 'Ana sayfa',
-            returnFromApps: 'Uygulamalardan dön', quickSettings: 'Hızlı ayarlar'
+            returnFromApps: 'Uygulamalardan dön', quickSettings: 'Hızlı ayarlar',
+            nextPrayer: 'Sonraki namaz', prayerTimes: 'Namaz vakitleri', prayerUpdating: 'Namaz vakitleri güncelleniyor…',
+            prayerUnavailable: 'Vakitler bekleniyor', prayerFajr: 'İmsak', prayerDhuhr: 'Öğle', prayerAsr: 'İkindi',
+            prayerMaghrib: 'Akşam', prayerIsha: 'Yatsı'
         }
     };
 

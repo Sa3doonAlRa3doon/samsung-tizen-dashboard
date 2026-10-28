@@ -60,6 +60,17 @@ window.LAUNCHER_CONFIG = {
         unit: 'celsius'         // 'celsius' | 'fahrenheit'
     },
 
+    // Optional next-prayer countdown powered by the AlAdhan daily timings API.
+    // Put real coordinates in config.local.js so a public repository does not reveal location.
+    prayer: {
+        enabled: false,
+        latitude: null,
+        longitude: null,
+        method: 8,              // 8 = Gulf Region; see https://aladhan.com/calculation-methods
+        school: 0,              // 0 = standard/Shafi, 1 = Hanafi
+        tune: ''                // optional nine comma-separated minute adjustments
+    },
+
     /*
      * EXPERIMENTAL navigation sound. Synthesised, so there is no audio file. `move` plays when
      * focus changes, `edge` when it cannot (the end of a row). Tune by ear in the browser
