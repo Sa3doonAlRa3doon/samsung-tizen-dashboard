@@ -45,6 +45,27 @@
         }), 8000, 'Launch');
     }
 
+    // Ask Tizen to open one of its own settings panels. Samsung may reject an operation
+    // on a particular firmware, so callers always provide a visible Samsung Home fallback.
+    function launchControl(operation, appId, launchMode) {
+        return withTimeout(new Promise(function (resolve, reject) {
+            try {
+                var control = new tizen.ApplicationControl(operation, null, null, null, null, launchMode || null);
+                tizen.application.launchAppControl(control, appId || null, resolve, reject);
+            } catch (e) {
+                reject(e);
+            }
+        }), 8000, 'Open setting');
+    }
+
+    // GROUP asks Tizen to keep this dashboard as the caller beneath the launched app, so Back
+    // can return here when the target app supports grouped launches. Some Samsung apps force
+    // SINGLE mode; the remote Home shortcut remains the reliable escape route for those apps.
+    function launchGrouped(appId) {
+        return launchControl('http://tizen.org/appcontrol/operation/main', appId, 'GROUP')
+            .catch(function () { return launch(appId); });
+    }
+
     function isConsumer(app) {
         if (PRELOADED.indexOf(app.id) >= 0) return true;
         if (!app.show || INTERNAL.indexOf(app.id) >= 0) return false;
@@ -121,6 +142,8 @@
         allSorted: allSorted,
         describe: describe,
         launch: launch,
+        launchGrouped: launchGrouped,
+        launchControl: launchControl,
         withTimeout: withTimeout
     };
 })();

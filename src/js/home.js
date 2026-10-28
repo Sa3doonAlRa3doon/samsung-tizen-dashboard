@@ -11,6 +11,7 @@
     var $ = UI.$;
     var el = UI.el;
     var KEY = UI.KEY;
+    function T(key) { return I18n.t(key); }
 
     var state = {
         apps: [],              // launchable apps from the TV (or the cache)
@@ -20,6 +21,11 @@
         tvMode: false,         // HDMI shown inside the launcher
         hdmi: {}               // last known { port: connected }
     };
+    var launchTimer = null;
+    var systemOpening = false;
+    var SAMSUNG_HOME = 'com.samsung.tv.csfs';
+    var SMARTTHINGS = '3202311033054';
+    var CAST_SETTINGS = 'ByJlgt0XeD.CastSettingsApp';
 
     // ---------- Tiles
 
@@ -101,8 +107,19 @@
             '<rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/>' +
             '<rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>';
         wrap.appendChild(tile);
-        wrap.appendChild(el('div', 'label', 'All apps'));
+        wrap.appendChild(el('div', 'label', T('allApps')));
         wrap._item = { kind: 'all' };
+        return wrap;
+    }
+
+    function addAppTile() {
+        var wrap = el('div', 'app');
+        var tile = el('div', 'tile add-app-tile');
+        tile.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" ' +
+            'stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+        wrap.appendChild(tile);
+        wrap.appendChild(el('div', 'label', '+ ' + T('dockApps')));
+        wrap._item = { kind: 'edit-dock' };
         return wrap;
     }
 
@@ -166,11 +183,12 @@
 
     function renderHome() {
         var row = $('apps-row');
+        UI.resetScroll(row);
         row.innerHTML = '';
         var items = homeItems();
         if (!items.length) items = Apps.allSorted(state.apps, false).slice(0, 8);
         items.forEach(function (item) { row.appendChild(appTile(item)); });
-        row.appendChild(allAppsTile());
+        row.appendChild(addAppTile());
 
         var row2 = $('inputs-row');
         row2.innerHTML = '';
@@ -204,7 +222,7 @@
         UI.resetScroll(grid);
         var items = Apps.allSorted(state.apps, state.showEverything);
         items.forEach(function (item) { grid.appendChild(appTile(item)); });
-        $('all-count').textContent = items.length + ' apps';
+        $('all-count').textContent = items.length + ' · ' + T('allApps');
     }
 
     function renderLab() {
@@ -250,9 +268,106 @@
     }
 
     function launchApp(item) {
-        runLogged('Launch ' + item.id, Apps.launch(item.id)).catch(function (err) {
-            UI.toast('Could not open ' + item.label + ': ' + DevLog.errorText(err));
+        if (launchTimer) return;
+        UI.toast('Opening ' + item.label + ' — press Home to return to Dashboard');
+        launchTimer = setTimeout(function () {
+            launchTimer = null;
+            runLogged('Grouped launch ' + item.id, Apps.launchGrouped(item.id)).catch(function (err) {
+                UI.toast('Could not open ' + item.label + ': ' + DevLog.errorText(err));
+            });
+        }, 1200);
+    }
+
+    function clearReturnAlarm() {
+        try { tizen.alarm.removeAll(); }
+        catch (e) { log('Return alarm clear failed: ' + DevLog.errorText(e)); }
+    }
+
+    function scheduleReturnAlarm(seconds) {
+        try {
+            clearReturnAlarm();
+            var alarm = new tizen.AlarmRelative(seconds);
+            var main = new tizen.ApplicationControl('http://tizen.org/appcontrol/operation/main');
+            var appId = tizen.application.getCurrentApplication().appInfo.id;
+            tizen.alarm.add(alarm, appId, main);
+            return true;
+        } catch (e) {
+            log('Return alarm unavailable: ' + DevLog.errorText(e));
+            return false;
+        }
+    }
+
+    function openSettingPanel(label, operation) {
+        if (systemOpening) return;
+        systemOpening = true;
+        var guarded = scheduleReturnAlarm(120);
+        UI.toast('Opening ' + label + ' — ' + (guarded ? 'Dashboard returns automatically in 2 minutes' : 'press Back to return'));
+        Apps.launchControl(operation, null, 'GROUP').catch(function (err) {
+            log(label + ' panel unavailable: ' + DevLog.errorText(err));
+            UI.toast(label + ' panel unavailable — opening Samsung Home');
+            return Apps.launch(SAMSUNG_HOME);
+        }).catch(function (err) {
+            UI.toast('Could not open ' + label + ': ' + DevLog.errorText(err));
+        }).then(function () { systemOpening = false; });
+    }
+
+    function wifiMenu() {
+        tizen.systeminfo.getPropertyValue('WIFI_NETWORK', function (wifi) {
+            var signal = typeof wifi.signalStrength === 'number' ? Math.round(wifi.signalStrength * 100) + '%' : 'unknown signal';
+            var status = wifi.status === 'ON'
+                ? 'Connected · ' + (wifi.ssid || 'Wi‑Fi') + ' · ' + signal
+                : 'Wi‑Fi is off or disconnected';
+            UI.menu('Wi‑Fi', [
+                { label: status, run: function () { UI.toast((wifi.ipAddress || 'No IP address') + ' · ' + (wifi.securityMode || 'security unknown')); } },
+                { label: 'Open Wi‑Fi network list · auto-return in 2 min', run: function () { openSettingPanel('Wi‑Fi', 'http://tizen.org/appcontrol/operation/setting/wifi'); } },
+                { label: 'Refresh connection status', run: wifiMenu },
+                { label: 'Open Samsung network settings', run: function () { Apps.launchGrouped(SAMSUNG_HOME); } }
+            ]);
+        }, function (err) {
+            log('Wi‑Fi status unavailable: ' + DevLog.errorText(err));
+            UI.menu('Wi‑Fi', [
+                { label: 'Open Wi‑Fi network list · auto-return in 2 min', run: function () { openSettingPanel('Wi‑Fi', 'http://tizen.org/appcontrol/operation/setting/wifi'); } },
+                { label: 'Open Samsung network settings', run: function () { Apps.launchGrouped(SAMSUNG_HOME); } }
+            ]);
         });
+    }
+
+    function bluetoothMenu() {
+        var supported = false;
+        try { supported = !!tizen.systeminfo.getCapability('http://tizen.org/feature/network.bluetooth'); }
+        catch (e) { log('Bluetooth capability unavailable: ' + DevLog.errorText(e)); }
+        UI.menu('Bluetooth', [
+            { label: supported ? 'Bluetooth is available on this TV' : 'Bluetooth status is managed by Samsung', run: function () { UI.toast('Use the device list below to pair speakers, headphones or remotes'); } },
+            { label: 'Open Bluetooth device list · auto-return in 2 min', run: function () { openSettingPanel('Bluetooth', 'http://tizen.org/appcontrol/operation/setting/bt_enable'); } },
+            { label: 'Open SmartThings / Connected Devices', run: function () {
+                Apps.launchGrouped(SMARTTHINGS).catch(function () { return Apps.launchGrouped(SAMSUNG_HOME); });
+            } },
+            { label: 'Open Samsung settings', run: function () { Apps.launchGrouped(SAMSUNG_HOME); } }
+        ]);
+    }
+
+    function openScreenShare() {
+        if (systemOpening) return;
+        systemOpening = true;
+        UI.toast('Opening phone sharing — on your phone choose Smart View, then this TV');
+        Apps.launch(CAST_SETTINGS).catch(function () {
+            return Apps.launch(SMARTTHINGS);
+        }).catch(function (err) {
+            log('Share panels unavailable: ' + DevLog.errorText(err));
+            UI.toast('Opening Samsung Home — choose Connected Devices / Screen Mirroring');
+            return Apps.launch(SAMSUNG_HOME);
+        }).catch(function (err) {
+            UI.toast('Could not open screen sharing: ' + DevLog.errorText(err));
+        }).then(function () { systemOpening = false; });
+    }
+
+    function dockRows() {
+        var items = UI.children($('apps-row'));
+        if (Number(Prefs.get().appearance.dockRows) !== 2) return [items];
+        var top = [];
+        var bottom = [];
+        items.forEach(function (item, i) { (i % 2 ? bottom : top).push(item); });
+        return [top, bottom];
     }
 
     function openInput(item, method) {
@@ -263,6 +378,52 @@
             if (result === 'inapp') enterTvMode();
         }).catch(function (err) {
             UI.toast('Could not switch to ' + item.label + ': ' + DevLog.errorText(err));
+        });
+    }
+
+    function openDiscoveredSource(src, label) {
+        var method = cfg.inputMethod;
+        UI.toast('Switching to ' + label + '…');
+        runLogged('Input ' + Inputs.describeSource(src) + ' via ' + method,
+            Inputs.openSource(src, method)).then(function (result) {
+            log('Current source now: ' + Inputs.describeSource(Inputs.current()));
+            if (result === 'inapp') enterTvMode();
+        }).catch(function (err) {
+            UI.toast('Could not switch to ' + label + ': ' + DevLog.errorText(err));
+        });
+    }
+
+    function sourceMenu() {
+        Inputs.sources().then(function (info) {
+            var items = [];
+            var seen = {};
+            function add(src, connected) {
+                var key = src.type + ':' + src.number;
+                if (seen[key]) return;
+                seen[key] = true;
+                items.push({ src: src, connected: connected });
+            }
+            (info.connected || []).forEach(function (src) { add(src, true); });
+            (info.disconnected || []).forEach(function (src) { add(src, false); });
+            items.sort(function (a, b) {
+                if (a.src.type === 'TV' && b.src.type !== 'TV') return -1;
+                if (a.src.type !== 'TV' && b.src.type === 'TV') return 1;
+                return (a.src.number || 0) - (b.src.number || 0);
+            });
+            var options = items.map(function (entry) {
+                var label = entry.src.type === 'TV' ? 'Live TV' : entry.src.type + ' ' + entry.src.number;
+                return {
+                    label: label + (entry.connected ? '  ·  connected' : '  ·  not connected'),
+                    run: function () { openDiscoveredSource(entry.src, label); }
+                };
+            });
+            if (!options.length) {
+                UI.toast('The TV did not report any inputs');
+                return;
+            }
+            UI.menu('TV & HDMI sources', options);
+        }).catch(function (err) {
+            UI.toast('Could not read inputs: ' + DevLog.errorText(err));
         });
     }
 
@@ -328,6 +489,9 @@
         $('time-main').textContent = t.time;
         $('time-suffix').textContent = t.suffix;
         $('date').textContent = Appearance.date(d);
+        $('analog-hour').style.transform = 'translateX(-50%) rotate(' + ((d.getHours() % 12) * 30 + d.getMinutes() * 0.5) + 'deg)';
+        $('analog-minute').style.transform = 'translateX(-50%) rotate(' + (d.getMinutes() * 6 + d.getSeconds() * 0.1) + 'deg)';
+        $('analog-second').style.transform = 'translateX(-50%) rotate(' + (d.getSeconds() * 6) + 'deg)';
     }
 
     // The TV takes ~4 s to list its ~450 apps, so Home is drawn from the last list we saw
@@ -373,11 +537,15 @@
     }
 
     function setApps(apps) {
+        var firstLoad = !state.apps.length;
         var sig = apps.map(function (a) { return a.id + '|' + a.name + '|' + a.show; }).join(',');
         if (sig === state.appsSig) return;
         state.appsSig = sig;
         state.apps = apps;
         renderHome();
+        if (firstLoad && UI.isVisible('home') && $('apps-row').firstElementChild) {
+            UI.focusOn($('apps-row').firstElementChild);
+        }
         if (UI.isVisible('all')) UI.show('all', { back: true });
         listeners.forEach(function (fn) { fn(); });
     }
@@ -408,27 +576,38 @@
         UI.register('home', {
             el: $('home'),
             startRow: 1,
-            hints: [['OK', 'Open'], ['▲', 'Settings']],
+            hints: function () {
+                return [['OK', T('open')], ['▲', T('quickSettings')], ['▼', T('allApps')], ['Home', T('returnFromApps')]];
+            },
             rows: function () {
-                return [[$('gear')], UI.children($('apps-row')), UI.children($('inputs-row'))];
+                return [UI.children($('quick-actions'))].concat(dockRows());
             },
             activate: function (item) {
                 if (item.kind === 'app') launchApp(item);
                 else if (item.kind === 'all') UI.show('all');
                 else if (item.kind === 'input') openInput(item);
+                else if (item.kind === 'source') sourceMenu();
                 else if (item.kind === 'settings') UI.show('settings');
+                else if (item.kind === 'edit-dock') UI.show('homeapps');
+                else if (item.kind === 'wifi') wifiMenu();
+                else if (item.kind === 'bluetooth') bluetoothMenu();
+                else if (item.kind === 'share') openScreenShare();
             },
             // Home is the root: Back does nothing.
             onBack: function () { return true; }
         });
         $('gear')._item = { kind: 'settings' };
+        $('source')._item = { kind: 'source' };
+        $('wifi')._item = { kind: 'wifi' };
+        $('bluetooth')._item = { kind: 'bluetooth' };
+        $('share')._item = { kind: 'share' };
 
         UI.register('all', {
             el: $('all'),
             rows: function () { return UI.chunk(UI.children($('all-grid')), GRID_COLS); },
             onShow: renderAll,
             activate: launchApp,
-            hints: [['OK', 'Open'], ['Back', 'Home']]
+            hints: function () { return [['OK', T('open')], ['Back', T('home')]]; }
         });
 
         UI.register('lab', {
@@ -440,6 +619,7 @@
     }
 
     function init() {
+        clearReturnAlarm();
         registerKeys();
         registerViews();
         UI.setColourKey(colourKey);
@@ -449,6 +629,15 @@
                 return true;
             }
             if (!UI.isVisible('home')) { recentKeys.length = 0; return false; }
+            var focused = document.querySelector('.focused');
+            if (k === KEY.DOWN && focused && focused.parentNode && focused.parentNode.id === 'apps-row') {
+                if (Number(Prefs.get().appearance.dockRows) === 2) {
+                    var index = UI.children($('apps-row')).indexOf(focused);
+                    if (index % 2 === 0 && index + 1 < $('apps-row').children.length) return false;
+                }
+                UI.show('all');
+                return true;
+            }
             if (gameCodeEntered(k)) {
                 if (window.RunnerGame) RunnerGame.open(true);
                 return true;
@@ -457,7 +646,7 @@
         });
         Appearance.apply();
         updateClock();
-        setInterval(updateClock, 10000);
+        setInterval(updateClock, 1000);
         renderLab();
         var cached = readCache();
         if (cached && cached.length) setApps(cached);
@@ -470,6 +659,7 @@
                 if (state.tvMode) exitTvMode();
                 return;
             }
+            clearReturnAlarm();
             updateClock();
             refreshInputStatus();
             if (UI.isVisible('home')) Wallpaper.homeShown();
@@ -495,6 +685,7 @@
         renderLab: renderLab,
         updateClock: updateClock,
         reloadApps: loadApps,
+        renderHome: renderHome,
         miniTile: miniTile,
         miniInputTile: miniInputTile,
         onAppsChanged: function (fn) { listeners.push(fn); }

@@ -1,0 +1,17 @@
+[Unit]
+Description=Samsung Tizen Dashboard photo inbox
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dashboard
+WorkingDirectory=/opt/tizen-dashboard/button-redirect
+ExecStart=/usr/bin/python3 /opt/tizen-dashboard/button-redirect/photo_server.py --config /etc/tizen-dashboard/config.toml
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

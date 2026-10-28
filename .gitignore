@@ -27,6 +27,13 @@ signature*.xml
 # secrets
 .env
 .env.*
+button-redirect/config.toml
+button-redirect/couchctl.toml
+button-redirect/tokens.json
+button-redirect/uploads/
+button-redirect/__pycache__/
+.venv*/
+src/.manifest.tmp
 
 # Per-TV config: coordinates, devlog address. config.js keeps the nulls and this overrides them,
 # so nothing has to be stripped before a push. See src/js/config.local.example.js.

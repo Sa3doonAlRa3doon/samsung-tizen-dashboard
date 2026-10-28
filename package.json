@@ -1,13 +1,18 @@
 {
-  "name": "arn0-tv-launcher",
-  "version": "0.2.0",
+  "name": "samsung-tizen-dashboard",
+  "version": "0.6.18",
   "private": true,
-  "description": "Minimal remote-friendly launcher for a Samsung Tizen TV",
+  "description": "Remote-friendly customizable dashboard for Samsung Tizen TVs",
   "scripts": {
     "preview": "node scripts/serve.mjs",
-    "build": "sh scripts/build.sh",
+    "build": "node scripts/build.mjs",
+    "qa": "node scripts/qa-v0618.cjs",
     "devlog": "node scripts/devlog-server.mjs",
     "icon": "node scripts/make-icon.mjs",
     "fetch-assets": "node scripts/fetch-assets.mjs"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "playwright": "^1.56.1"
   }
 }

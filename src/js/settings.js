@@ -5,7 +5,8 @@
     var $ = UI.$;
     var el = UI.el;
     var KEY = UI.KEY;
-    var THUMB_COLS = 6;
+    function T(key) { return I18n.t(key); }
+    var THUMB_COLS = 7;
 
     // Samsung's on-screen keyboard (IME) sends these for its Done / Cancel buttons.
     var IME_DONE = 65376;
@@ -84,6 +85,7 @@
     }
 
     var opening = false;
+    var SAMSUNG_STORE = 'com.samsung.tv.store';
     function openSamsungHome() {
         if (opening) return;
         opening = true;
@@ -94,28 +96,45 @@
         }).then(function () { opening = false; });
     }
 
+    function openSamsungStore() {
+        if (opening) return;
+        opening = true;
+        DevLog.log('Open Samsung App Store');
+        Apps.launch(SAMSUNG_STORE).catch(function (err) {
+            DevLog.log('Samsung App Store direct launch failed: ' + DevLog.errorText(err));
+            UI.toast('Opening Samsung Home — choose Apps');
+            return Apps.launch(SAMSUNG_HOME);
+        }).catch(function (err) {
+            DevLog.log('Samsung Home fallback failed: ' + DevLog.errorText(err));
+            UI.toast('Could not open Samsung Apps: ' + DevLog.errorText(err));
+        }).then(function () { opening = false; });
+    }
+
     // ---------- Overview
 
     function wallpaperSummary() {
         var p = Prefs.get().wallpaper;
         if (p.mode === 'off') return 'Off';
-        if (p.mode === 'rotate') return 'Rotate · ' + Wallpaper.interval(p.interval).label.toLowerCase();
+        if (p.mode === 'rotate') {
+            return Wallpaper.collection(p.collection).label + ' · ' + Wallpaper.interval(p.interval).label.toLowerCase();
+        }
         var w = Wallpaper.find(p.photo);
         return w ? w.title : 'Photo';
     }
 
     function overviewEntries() {
         var a = Prefs.get().appearance;
-        var shown = Home.inputs().filter(function (i) { return !i.hidden; }).length;
+        var clockStyle = Appearance.CLOCK_STYLES.find(function (s) { return s.key === a.clockStyle; }) || Appearance.CLOCK_STYLES[0];
         return [
-            { label: 'Background', value: wallpaperSummary(), run: function () { UI.show('bg'); } },
-            { label: 'Apps on Home', value: Home.homeItems().length + ' apps', run: function () { UI.show('homeapps'); } },
-            { label: 'Consoles', value: shown + ' on Home', run: function () { UI.show('consoles'); } },
-            { label: 'Appearance', value: Appearance.font(a.font).label + ' · ' + (a.clock === '12h' ? '12-hour' : '24-hour'), run: function () { UI.show('appearance'); } },
-            { label: 'Navigation sound', value: soundSummary(), run: function () { UI.show('sound-settings'); } },
-            { label: 'Screen saver', value: screensaverSummary(), run: function () { UI.show('screensaver-settings'); } },
-            { label: 'Samsung Home', value: 'Smart Hub and TV settings', run: openSamsungHome },
-            { label: 'Advanced', value: 'Refresh, reset, Lab', run: function () { UI.show('advanced'); } }
+            { label: T('background'), value: wallpaperSummary(), run: function () { UI.show('bg'); } },
+            { label: T('dockApps'), value: Home.homeItems().length + ' apps', run: function () { UI.show('homeapps'); } },
+            { label: T('appearance'), value: clockStyle.label + ' · ' + a.dockRows + '-row dock', run: function () { UI.show('appearance'); } },
+            { label: T('navigationSound'), value: soundSummary(), run: function () { UI.show('sound-settings'); } },
+            { label: T('screenSaver'), value: screensaverSummary(), run: function () { UI.show('screensaver-settings'); } },
+            { label: T('uploadTitle'), value: CustomPhotos.count() + ' · ' + T('permanent'), run: function () { UI.show('bg'); } },
+            { label: T('installApps'), value: 'Samsung App Store', run: openSamsungStore },
+            { label: T('samsungHome'), value: 'Smart Hub and TV settings', run: openSamsungHome },
+            { label: T('advanced'), value: 'Refresh, reset, Lab', run: function () { UI.show('advanced'); } }
         ];
     }
 
@@ -146,7 +165,7 @@
 
         var modes = $('bg-mode');
         modes.innerHTML = '';
-        [['off', 'Off'], ['photo', 'Photo'], ['rotate', 'Rotate']].forEach(function (m) {
+        [['off', T('off')], ['photo', T('stillPhoto')], ['rotate', T('slideshow')]].forEach(function (m) {
             modes.appendChild(chip(m[1], p.mode === m[0], { kind: 'mode', key: m[0] }));
         });
 
@@ -156,6 +175,23 @@
             intervals.appendChild(chip(i.label, p.interval === i.key, { kind: 'interval', key: i.key }));
         });
         $('bg-interval-block').classList.toggle('hidden', p.mode !== 'rotate');
+
+        var collections = $('bg-collection');
+        collections.innerHTML = '';
+        Wallpaper.COLLECTIONS.forEach(function (c) {
+            collections.appendChild(chip(c.label, p.collection === c.key, { kind: 'collection', key: c.key }));
+        });
+        $('bg-collection-block').classList.toggle('hidden', p.mode !== 'rotate');
+
+        var custom = $('bg-custom');
+        custom.innerHTML = '';
+        custom.appendChild(chip(T('syncPhotos'), false, { kind: 'custom-sync' }));
+        custom.appendChild(chip(T('addUrl'), false, { kind: 'custom-add' }));
+        var customCount = p.custom.length + CustomPhotos.count();
+        if (customCount) {
+            custom.appendChild(chip(T('clearPhotos') + ' (' + customCount + ')',
+                false, { kind: 'custom-clear' }));
+        }
 
         var photos = $('bg-photos');
         photos.innerHTML = '';
@@ -181,6 +217,21 @@
             p.lastChange = Date.now();
         } else if (item.kind === 'photo') {
             p.photo = item.key;
+        } else if (item.kind === 'collection') {
+            p.mode = 'rotate';
+            Wallpaper.selectCollection(item.key);
+            renderBackground();
+            UI.refresh();
+            return;
+        } else if (item.kind === 'custom-add') {
+            addCustomBackground();
+            return;
+        } else if (item.kind === 'custom-sync') {
+            syncCustomBackgrounds();
+            return;
+        } else if (item.kind === 'custom-clear') {
+            clearCustomBackgrounds();
+            return;
         }
         Prefs.save();
         Wallpaper.apply();
@@ -188,15 +239,80 @@
         UI.refresh();
     }
 
+    function addCustomBackground() {
+        rename('https://', function (url) {
+            if (!/^https?:\/\/[^\s"'\\]+$/i.test(url)) {
+                UI.toast('Use a direct http:// or https:// image URL');
+                return;
+            }
+            var p = Prefs.get().wallpaper;
+            p.custom.push(url);
+            p.photo = 'custom-' + (p.custom.length - 1);
+            p.collection = 'custom';
+            if (p.mode === 'off') p.mode = 'photo';
+            p.lastChange = Date.now();
+            Prefs.save();
+            Wallpaper.apply();
+            renderBackground();
+            UI.refresh();
+            UI.toast('Custom background added');
+        }, 'Custom background URL', 2048);
+    }
+
+    function syncCustomBackgrounds() {
+        UI.toast('Syncing · ' + CustomPhotos.server() + ' · PIN ' + CustomPhotos.pin());
+        CustomPhotos.sync().then(function (result) {
+            if (result.offline) {
+                UI.toast('Photo inbox unavailable · open ' + CustomPhotos.server() + ' on phone or laptop');
+            } else {
+                UI.toast(result.added + ' new · ' + result.total + ' saved permanently on TV');
+            }
+            if (result.total) {
+                var p = Prefs.get().wallpaper;
+                p.collection = 'custom';
+                if (p.mode === 'off') p.mode = 'photo';
+                Prefs.save();
+            }
+            renderBackground();
+            Wallpaper.apply();
+            UI.refresh();
+        });
+    }
+
+    function clearCustomBackgrounds() {
+        UI.menu('Clear custom backgrounds?', [
+            {
+                label: 'Clear them', run: function () {
+                    var p = Prefs.get().wallpaper;
+                    p.custom = [];
+                    if (p.photo.indexOf('custom-') === 0 || p.photo.indexOf('uploaded-') === 0) {
+                        p.photo = 'sarajevo-blue-hour';
+                    }
+                    if (p.collection === 'custom') p.collection = 'sarajevo';
+                    p.lastChange = Date.now();
+                    Prefs.save();
+                        CustomPhotos.clear().then(function () {
+                            Wallpaper.apply();
+                            renderBackground();
+                            UI.refresh();
+                        });
+                }
+            },
+            { label: 'Cancel' }
+        ]);
+    }
+
     // ---------- Appearance
 
     function appearanceBlocks() {
         return [
-            { title: 'Clock', key: 'clock', options: [['24h', '24-hour'], ['12h', '12-hour']] },
-            { title: 'Date', key: 'showDate', options: [[true, 'Show'], [false, 'Hide']] },
-            { title: 'Date language', key: 'locale', options: Appearance.LOCALES.map(function (l) { return [l.key, l.label]; }) },
-            { title: 'Font', key: 'font', options: Appearance.FONTS.map(function (f) { return [f.key, f.label, f.family]; }) },
-            { title: 'App names', key: 'names', options: [['always', 'Always'], ['focused', 'When selected'], ['never', 'Never']] }
+            { title: T('clockFace'), key: 'clockStyle', options: Appearance.CLOCK_STYLES.map(function (s) { return [s.key, s.label]; }) },
+            { title: T('clock'), key: 'clock', options: [['24h', T('twentyFour')], ['12h', T('twelve')]] },
+            { title: T('date'), key: 'showDate', options: [[true, T('show')], [false, T('hide')]] },
+            { title: T('interfaceLanguage'), key: 'locale', options: Appearance.LOCALES.map(function (l) { return [l.key, l.label]; }) },
+            { title: T('font'), key: 'font', options: Appearance.FONTS.map(function (f) { return [f.key, f.label, f.family]; }) },
+            { title: T('appNames'), key: 'names', options: [['always', T('always')], ['focused', T('selected')], ['never', T('never')]] },
+            { title: T('bottomTaskbar'), key: 'dockRows', options: [[1, T('oneRow')], [2, T('twoRows')]] }
         ];
     }
 
@@ -222,7 +338,9 @@
         Prefs.get().appearance[item.key] = item.value;
         Prefs.save();
         Appearance.apply();
+        I18n.apply();
         Home.updateClock();
+        if (item.key === 'locale') Home.renderHome();
         renderAppearance();
         UI.refresh();
     }
@@ -375,7 +493,7 @@
         var other = $('ed-other');
         other.innerHTML = '';
         ed.others.forEach(function (item) { other.appendChild(edRow(item, false)); });
-        $('ed-home-title').textContent = 'On Home · ' + ed.items.length;
+        $('ed-home-title').textContent = 'On dock · ' + ed.items.length;
         $('ed-other-title').textContent = 'Add apps · ' + ed.others.length;
         if (!ed.others.length) ed.col = 0;
     }
@@ -447,7 +565,7 @@
                 ed.items.push(added);
                 edSave();
                 edRender();
-                UI.toast('Added ' + added.label + ' to Home');
+                UI.toast('Added ' + added.label + ' to the dock');
             }
             edRefresh();
             return true;
@@ -469,9 +587,9 @@
                 }
             },
             {
-                label: 'Remove from Home', run: function () {
+                label: 'Remove from dock', run: function () {
                     if (ed.items.length <= 1) {
-                        UI.toast('Home needs at least one app');
+                        UI.toast('The dock needs at least one app');
                         return;
                     }
                     ed.items.splice(i, 1);
@@ -607,9 +725,11 @@
 
     var renameDone = null;
 
-    function rename(current, done) {
+    function rename(current, done, title, maxLength) {
         renameDone = done;
+        $('rename-title').textContent = title || 'Name';
         $('rename-input').value = current;
+        $('rename-input').maxLength = maxLength || 28;
         UI.show('rename');
     }
 
@@ -719,7 +839,7 @@
                     return [['▲ ▼', 'Reorder'], ['OK', 'Drop here'], ['Back', 'Cancel']];
                 }
                 return [
-                    ['OK', ed.col === 0 ? 'Options' : 'Add to Home'],
+                    ['OK', ed.col === 0 ? 'Options' : 'Add to dock'],
                     ['◀ ▶', 'Switch column'],
                     ['Back', 'Settings']
                 ];

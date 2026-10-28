@@ -1,0 +1,25 @@
+[tv]
+# Give the TV a reserved DHCP address, then put it here.
+host = "192.168.1.50"
+dashboard = "Arn0Lnchr0.Launcher"
+poll_seconds = 1.0
+home_grace_seconds = 10.0
+startup_delay_seconds = 10.0
+
+# Samsung store app IDs can vary by region/firmware. Verify yours first.
+prime_apps = [
+  "3201910019365",
+]
+
+# Apps from which pressing Home should return to the dashboard after the grace period.
+return_from_apps = [
+  "111299001912",  # YouTube example
+  "3201907018807", # Netflix example
+]
+
+[photos]
+bind = "0.0.0.0"
+port = 8096
+# Change this. Do not commit the real PIN.
+pin = "CHANGE-ME"
+directory = "uploads"

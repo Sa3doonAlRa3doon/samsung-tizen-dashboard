@@ -65,14 +65,16 @@
     }
 
     // Resolves to 'inapp' when the input is now showing inside the launcher, otherwise 'external'.
-    function open(hdmi, method) {
-        return findHdmi(hdmi).then(function (src) {
-            return setSource(src).then(function () {
-                if (method === 'switch') return 'external';
-                if (method === 'inapp') return showFull().then(function () { return 'inapp'; });
-                return openViewer().then(function () { return 'external'; });
-            });
+    function openSource(src, method) {
+        return setSource(src).then(function () {
+            if (method === 'switch') return 'external';
+            if (method === 'inapp') return showFull().then(function () { return 'inapp'; });
+            return openViewer().then(function () { return 'external'; });
         });
+    }
+
+    function open(hdmi, method) {
+        return findHdmi(hdmi).then(function (src) { return openSource(src, method); });
     }
 
     window.Inputs = {
@@ -81,6 +83,7 @@
         current: current,
         describeSource: describeSource,
         open: open,
+        openSource: openSource,
         hide: hide,
         openViewer: openViewer
     };

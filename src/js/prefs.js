@@ -17,9 +17,11 @@
                 preset: cfg.sound && cfg.sound.preset || 'soft'
             },
             wallpaper: {
-                mode: theme.wallpaper ? 'photo' : 'off',   // 'off' | 'photo' | 'rotate'
-                photo: theme.wallpaper || 'forest',
-                interval: '15m',        // see Wallpaper.INTERVALS
+                mode: theme.wallpaperMode || (theme.wallpaper ? 'photo' : 'off'),
+                photo: theme.wallpaper || 'sarajevo-blue-hour',
+                collection: theme.wallpaperCollection || 'all',
+                interval: theme.wallpaperInterval || '15m',
+                custom: [],
                 lastChange: 0
             },
             screensaver: {
@@ -30,10 +32,12 @@
             },
             appearance: {
                 clock: '24h',           // '24h' | '12h'
+                clockStyle: 'digital-latin', // 'digital-latin' | 'digital-arabic' | 'analog'
                 showDate: true,
                 locale: cfg.locale || 'en-GB',
                 font: 'manrope',        // see Appearance.FONTS
-                names: 'always'         // app names under tiles: 'always' | 'focused' | 'never'
+                names: 'always',        // app names under tiles: 'always' | 'focused' | 'never'
+                dockRows: 1             // compact taskbar: 1 | 2 rows
             },
             home: null,                 // [{ id, label, brand }] once edited; null = config.js apps
             inputs: null                // [{ hdmi, label, brand, method, hidden }] once edited; null = config.js
@@ -58,6 +62,15 @@
                 merge(prefs.appearance, saved.appearance);
                 if (Array.isArray(saved.home) && saved.home.length) prefs.home = saved.home;
                 if (Array.isArray(saved.inputs)) prefs.inputs = saved.inputs;
+                // Upgrade the original one-photo setup to the requested Sarajevo slideshow once.
+                // Future user choices include `collection`, so in-place app updates preserve them.
+                if (!saved.wallpaper || !Object.prototype.hasOwnProperty.call(saved.wallpaper, 'collection')) {
+                    prefs.wallpaper.mode = 'rotate';
+                    prefs.wallpaper.photo = 'sarajevo-blue-hour';
+                    prefs.wallpaper.collection = 'sarajevo';
+                    prefs.wallpaper.interval = '4s';
+                    prefs.wallpaper.lastChange = Date.now();
+                }
             } else {
                 var legacy = localStorage.getItem(LEGACY_WALLPAPER_KEY);
                 if (legacy) prefs.wallpaper.photo = legacy;
@@ -70,6 +83,7 @@
             if (prefs.wallpaper.mode === 'photo') prefs.wallpaper.mode = 'off';
             prefs.wallpaper.photo = 'forest';
         }
+        if (!Array.isArray(prefs.wallpaper.custom)) prefs.wallpaper.custom = [];
         return prefs;
     }
 

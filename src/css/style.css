@@ -83,7 +83,24 @@ html, body {
     width: 1920px;
     height: 1080px;
     background: var(--bg) url("../img/bg.jpg") center / cover no-repeat;
-    will-change: transform;
+}
+
+.bg-layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition: opacity 0.75s ease;
+    will-change: opacity;
+}
+
+.bg-layer.visible {
+    opacity: 1;
 }
 
 .view {
@@ -105,6 +122,8 @@ h1, h2 {
 
 /* ---------- Home ---------- */
 
+#home { background: rgba(0, 0, 0, 0.14); }
+
 .clock {
     position: absolute;
     top: 88px;
@@ -116,6 +135,7 @@ h1, h2 {
     font-weight: 300;
     letter-spacing: -3px;
     line-height: 1;
+    text-shadow: 0 4px 22px rgba(0, 0, 0, 0.9);
 }
 
 #time-suffix {
@@ -130,6 +150,60 @@ h1, h2 {
     font-size: 34px;
     font-weight: 500;
     color: var(--muted);
+    text-shadow: 0 3px 16px rgba(0, 0, 0, 0.95);
+}
+
+.analog-clock {
+    display: none;
+    position: relative;
+    width: 178px;
+    height: 178px;
+    border: 5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.32);
+}
+
+.clock-analog #time { display: none; }
+.clock-analog .analog-clock { display: block; }
+.clock-arabic #time { direction: rtl; }
+
+html[dir="rtl"] .page-head,
+html[dir="rtl"] .shelf h2,
+html[dir="rtl"] .setting-block h2 { text-align: right; }
+
+html[dir="rtl"] .setting-row { direction: rtl; }
+html[dir="rtl"] .setting-value { margin-left: 0; margin-right: auto; }
+
+.clock-mark {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.82);
+    border-radius: 3px;
+}
+.mark-12, .mark-6 { left: 84px; width: 10px; height: 18px; }
+.mark-12 { top: 10px; }
+.mark-6 { bottom: 10px; }
+.mark-3, .mark-9 { top: 84px; width: 18px; height: 10px; }
+.mark-3 { right: 10px; }
+.mark-9 { left: 10px; }
+
+.clock-hand {
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    transform-origin: 50% 100%;
+    border-radius: 8px;
+}
+.hour-hand { width: 10px; height: 51px; background: #fff; }
+.minute-hand { width: 7px; height: 70px; background: #fff; }
+.second-hand { width: 3px; height: 73px; background: #ff5d65; }
+.clock-pin {
+    position: absolute;
+    left: 82px;
+    top: 82px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ff5d65;
 }
 
 /* Appearance options */
@@ -144,19 +218,30 @@ h1, h2 {
     right: 0;
 }
 
-#apps-section { top: 350px; }
-#inputs-section { top: 690px; }
+#apps-section {
+    top: auto;
+    right: var(--edge);
+    bottom: 112px;
+    padding: 20px 24px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 30px;
+    box-sizing: border-box;
+    background: rgba(7, 9, 13, 0.72);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+#inputs-section { display: none; }
 
 .shelf h2 {
-    margin-bottom: 26px;
-    font-size: 24px;
+    margin-bottom: 14px;
+    font-size: 20px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--muted);
 }
 
 .row-viewport {
-    width: 1680px;
+    width: 100%;
+    overflow: hidden;
 }
 
 .row-track {
@@ -166,12 +251,40 @@ h1, h2 {
     transition: transform 0.18s ease-out;
 }
 
+#apps-row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: 158px;
+    grid-auto-columns: 238px;
+    column-gap: 20px;
+    row-gap: 12px;
+}
+
+.dock-two-rows #apps-row {
+    grid-template-rows: repeat(2, 158px);
+}
+
 /* App tiles */
 
 .app {
     flex: none;
     width: 300px;
     margin-right: 36px;
+}
+
+#apps-row .app {
+    width: 238px;
+    margin-right: 0;
+}
+
+#apps-row .tile {
+    height: 112px;
+    border-radius: 19px;
+}
+
+#apps-row .app .label {
+    margin-top: 10px;
+    font-size: 21px;
 }
 
 .tile {
@@ -259,6 +372,21 @@ h1, h2 {
     background: rgba(255, 255, 255, 0.08);
 }
 
+.add-app-tile {
+    box-sizing: border-box;
+    border: 3px dashed rgba(255, 255, 255, 0.42);
+    background: rgba(10, 14, 22, 0.56);
+}
+
+.add-app-tile svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 72px;
+    height: 72px;
+    margin: -36px 0 0 -36px;
+}
+
 .all-tile svg {
     position: absolute;
     top: 50%;
@@ -327,6 +455,43 @@ h1, h2 {
 .dot.on { background: #4ade80; }
 
 
+/* Quick settings */
+
+.quick-actions {
+    position: absolute;
+    top: 94px;
+    right: var(--edge);
+    display: flex;
+    gap: 12px;
+}
+
+.quick-action {
+    width: 142px;
+    height: 70px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(7, 9, 13, 0.6);
+    box-sizing: border-box;
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+}
+
+.quick-action.icon-only { width: 70px; }
+.quick-action span:not(.quick-icon) { font-size: 19px; font-weight: 650; }
+.quick-icon { font-size: 30px; line-height: 1; }
+.quick-action.focused {
+    background: var(--fg);
+    color: var(--bg);
+    transform: scale(1.06);
+}
+
+/* Legacy selectors retained for old preview fixtures. */
+
 /* Gear (Settings) */
 
 .gear {
@@ -353,6 +518,39 @@ h1, h2 {
     background: var(--fg);
     color: var(--bg);
     transform: scale(1.08);
+}
+
+.quick-source {
+    position: absolute;
+    top: 100px;
+    right: calc(var(--edge) + 100px);
+    width: 190px;
+    height: 76px;
+    border-radius: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.08);
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+}
+
+.quick-source svg {
+    width: 34px;
+    height: 34px;
+    margin-right: 13px;
+}
+
+.quick-source span {
+    font-size: 22px;
+    font-weight: 650;
+}
+
+.quick-source.focused {
+    background: var(--fg);
+    color: var(--bg);
+    transform: scale(1.06);
 }
 
 /* ---------- Pages (everything except Home) ---------- */
@@ -485,6 +683,24 @@ h1, h2 {
     margin-bottom: 14px;
 }
 
+#appearance-body {
+    top: 194px;
+}
+
+#appearance-body .setting-block {
+    margin-bottom: 13px;
+}
+
+#appearance-body .setting-block h2 {
+    margin-bottom: 7px;
+    font-size: 18px;
+}
+
+#appearance-body .chip {
+    padding: 9px 19px;
+    font-size: 22px;
+}
+
 .setting-block h2,
 .ed-col h2 {
     margin-bottom: 22px;
@@ -524,16 +740,17 @@ h1, h2 {
 
 .thumbs {
     display: grid;
-    grid-template-columns: repeat(6, 256px);
-    column-gap: 28px;
+    grid-template-columns: repeat(7, 220px);
+    column-gap: 24px;
     row-gap: 26px;
 }
 
 .thumb img {
     display: block;
-    width: 256px;
-    height: 144px;
+    width: 220px;
+    height: 124px;
     border-radius: 14px;
+    object-fit: cover;
 }
 
 .thumb-title {
@@ -806,6 +1023,7 @@ html.preview, html.preview body {
     gap: 40px;
     font-size: 22px;
     color: #a3a8b3;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
 }
 
 .hints.hidden { display: none; }
